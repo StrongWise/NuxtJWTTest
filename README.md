@@ -1,4 +1,5 @@
 # NuxtJWTTest
+# 참고 > https://github.com/bezkoder/vue-3-authentication-jwt
 
 ## Build Setup
 
