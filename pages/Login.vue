@@ -8,7 +8,7 @@
           class="login-form"
           :model="model"
           :rules="rules"
-          @submit.native.prevent="loginSubmit"
+          @submit.native.prevent="onSubmit"
         >
           <el-form-item prop="username">
             <label class="label">Username</label>
@@ -34,10 +34,6 @@
               Login
             </el-button>
           </el-form-item>
-          <!-- <a class="forgot-password" href="https://oxfordinformatics.com/">Forgot password ?</a> -->
-          <!-- <el-button class="login-button" native-type="submit" block @click="test()">
-            test
-          </el-button> -->
           Don't have an account yet? <nuxt-link to="/Register">
             Register now
           </nuxt-link>
@@ -48,7 +44,7 @@
 </template>
 
 <script>
-import axios from 'axios'
+// import axios from 'axios'
 export default {
   name: 'Login',
   data () {
@@ -70,8 +66,8 @@ export default {
             trigger: 'blur'
           },
           {
-            min: 4,
-            message: 'Username length should be at least 5 characters',
+            min: 2,
+            message: 'Username length should be at least 2 characters',
             trigger: 'blur'
           }
         ],
@@ -89,50 +85,24 @@ export default {
   created () {
   },
   methods: {
-    async test () {
-      const data = {
-        username: this.username,
-        password: this.password
-      }
-      await axios.post('http://localhost:8080/api/auth/signin', data)
-        .then(function (response) {
-          console.log(response)
-        })
-        .catch(function (error) {
-          console.log(error)
-        })
-    },
-    async login () {
-      console.log(this.username, this.password)
-      const url = 'http://localhost:8080/users'
-      const data = {
-        username: this.username,
-        password: this.password
-      }
-      await axios.post(url, data)
-        .then(function (response) {
-          console.log(response)
-        })
-        .catch(function (error) {
-          console.log(error)
-        })
-    },
-    async loginSubmit () {
+    async onSubmit () {
+      console.log('Login onSubmit')
       const valid = await this.$refs.form.validate()
       if (!valid) {
         return
       }
       this.loading = true
-      await this.login()
-      this.loading = false
-      if (
-        this.model.username === this.validCredentials.username &&
-        this.model.password === this.validCredentials.password
-      ) {
-        this.$message.success('Login successfull')
-      } else {
-        this.$message.error('Username or password is invalid')
-      }
+      await this.$store.dispatch('auth/login', this.model).then(
+        () => {
+          this.$message.success('Login successfull')
+          this.$router.push('/')
+        },
+        (error) => {
+          console.error(error)
+          this.loading = false
+          this.$message.error('Username or password is invalid')
+        }
+      )
     },
     goPage (url) {
       if (url) {

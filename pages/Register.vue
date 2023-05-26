@@ -6,14 +6,14 @@
         <el-form
           ref="form"
           class="register-form"
-          :model="model"
+          :model="form"
           :rules="rules"
-          @submit.native.prevent="signUp()"
+          @submit.native.prevent="onSubmit"
         >
           <el-form-item prop="username">
             <label class="label">Username</label>
             <el-input
-              v-model="model.username"
+              v-model="form.username"
               placeholder="Username"
               type="text"
               name="username"
@@ -24,7 +24,7 @@
           <el-form-item prop="email">
             <label class="label">Email</label>
             <el-input
-              v-model="model.email"
+              v-model="form.email"
               placeholder="Email"
               type="text"
               name="email"
@@ -35,7 +35,7 @@
           <el-form-item prop="password">
             <label class="label">Password</label>
             <el-input
-              v-model="model.password"
+              v-model="form.password"
               placeholder="Password"
               :type="fieldTypes.password"
               autocomplete="off"
@@ -68,16 +68,20 @@
 
 <script>
 import axios from 'axios'
+import { common } from '~/mixin/common.js'
+
 export default {
   name: 'Register',
+  mixins: [common],
   data () {
     return {
-      validCredentials: {
-        username: 'lightscope',
-        password: 'lightscope'
-      },
-      model: {
+      // validCredentials: {
+      //   username: 'lightscope',
+      //   password: 'lightscope'
+      // },
+      form: {
         username: '',
+        email: '',
         password: ''
       },
       fieldTypes: {
@@ -98,7 +102,7 @@ export default {
         password: [
           { required: true, message: 'assword is required!', trigger: 'blur' },
           { min: 6, message: 'Must be at least 6 characters!', trigger: 'blur' },
-          { min: 40, message: 'Must be maximum 40 characters!', trigger: 'blur' }
+          { max: 40, message: 'Must be maximum 40 characters!', trigger: 'blur' }
         ]
       }
     }
@@ -106,58 +110,42 @@ export default {
   created () {
   },
   methods: {
-    async test () {
-      const data = {
-        username: this.username,
-        password: this.password
-      }
-      await axios.post('http://localhost:8080/api/auth/signin', data)
-        .then(function (response) {
-          console.log(response)
-        })
-        .catch(function (error) {
-          console.log(error)
-        })
-    },
-    async register () {
-      console.log(this.username, this.password)
-      const url = 'http://localhost:8080/users'
-      const data = {
-        username: this.username,
-        password: this.password
-      }
-      await axios.post(url, data)
-        .then(function (response) {
-          console.log(response)
-        })
-        .catch(function (error) {
-          console.log(error)
-        })
-    },
-    async signUp () {
+    async onSubmit () {
+      console.log('Register onSubmit', this.authHeader())
+
       const valid = await this.$refs.form.validate()
       if (!valid) {
         return
       }
+      // this.$refs.form.validate((valid) => {
+      //   if (!valid) {
+      //     this.$message.error('Username or password is invalid')
+      //   }
+      // })
       this.loading = true
-      await this.register()
-      this.loading = false
-      if (
-        this.model.username === this.validCredentials.username &&
-        this.model.password === this.validCredentials.password
-      ) {
-        this.$message.success('register successfull')
-      } else {
-        this.$message.error('Username or password is invalid')
-      }
+      await axios
+        .post('http://localhost:8080/api/auth/signup', this.form)
+        .then((response) => {
+          console.log('response.data.accessToken > ', response.data.accessToken)
+          if (response.data.accessToken) {
+            localStorage.setItem('user', JSON.stringify(response.data))
+            this.$store.dispatch('auth/register', this.form)
+            this.$message.success(response.data.message)
+            this.loading = false
+            this.$router.push('/login')
+          }
+        })
+        .catch((error) => {
+          this.message = (error.response && error.response.data && error.response.data.message) || error.message || error.toString()
+          this.$store.dispatch('auth/register')
+          this.$message.error(this.message)
+          this.loading = false
+        })
     },
     handleType (event) {
       const { srcElement, type } = event
       const { name, value } = srcElement
 
-      console.log('type > ', type)
-      console.log('name > ', name)
-      console.log('value > ', value)
       if (type === 'blur' && !value) {
         this.fieldTypes[name] = 'text'
       } else {
