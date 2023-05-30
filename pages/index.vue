@@ -3,7 +3,11 @@
     <div class="home">
       <el-card>
         <h2>HOME</h2>
+        <h3 v-show="loggedIn">
+          LogIn User : {{ currentUser?.username }}
+        </h3>
         <el-button
+          v-show="!loggedIn"
           class="login-button"
           type="primary"
           native-type="submit"
@@ -12,6 +16,7 @@
           Login
         </el-button>
         <el-button
+          v-show="loggedIn"
           class="logout-button"
           type="primary"
           native-type="submit"
@@ -19,41 +24,66 @@
         >
           LogOut
         </el-button>
+        <p>
+          Don't have an account yet? <nuxt-link to="/Register">
+            Register now
+          </nuxt-link>
+        </p>
+        <div class="board">
+          <p>{{ content }}</p>
+        </div>
       </el-card>
     </div>
   </div>
 </template>
 
 <script>
-
+import axios from 'axios'
 export default {
   name: 'Home',
   data () {
     return {
+      content: ''
     }
   },
-  mounted () {
-    this.loginCheck()
-  },
-  methods: {
+  computed: {
     currentUser () {
       return this.$store.state.auth.user
     },
-    async loginCheck () {
-      // await this.$router.push('/home')
-    },
+    loggedIn () {
+      return this.$store.state.auth.status.loggedIn
+    }
+  },
+  async created () {
+    if (process.client) {
+      await this.$store.dispatch('auth/loadAuthFromLocalStorage')
+    }
+    if (this.loggedIn) {
+      this.$router.push('/profile')
+    }
+  },
+  async mounted () {
+    await axios
+      .get('http://localhost:8080/api/board/all')
+      .then((response) => {
+        this.content = response.data
+      })
+      .catch((error) => {
+        this.content =
+          (error.response &&
+            error.response.data &&
+            error.response.data.message) ||
+          error.message ||
+          error.toString()
+      })
+  },
+  methods: {
     loginBtn () {
-      console.log('this.$store.state.auth.user > ', this.$store.state.auth.user)
-      console.log('this.$store.state.auth.status.loggedIn > ', this.$store.state.auth.status.loggedIn)
-
       this.$router.push('/login')
     },
     logoutBtn () {
-      console.log('this.$store.state.auth.user > ', this.$store.state.auth.user)
-      console.log('this.$store.state.auth.status.loggedIn > ', this.$store.state.auth.status.loggedIn)
-
-      this.$store.dispatch('auth/logout')
-      // this.$router.push('/login')
+      localStorage.removeItem('user')
+      window.location.reload()
     }
   }
 }
@@ -69,5 +99,9 @@ export default {
 .login-button .logout-button {
   width: 100%;
   margin-top: 40px;
+}
+
+.board {
+  color: red;
 }
 </style>

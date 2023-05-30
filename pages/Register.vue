@@ -45,6 +45,10 @@
               @blur="handleType"
             />
           </el-form-item>
+
+          <el-checkbox-group v-model="checkedRoles" @change="handleCheckedRolesChange">
+            <el-checkbox v-for="item in roles" :key="item.id" :label="item" />
+          </el-checkbox-group>
           <el-form-item>
             <el-button
               :loading="loading"
@@ -56,7 +60,7 @@
               Sign Up
             </el-button>
           </el-form-item>
-          <!-- <a class="forgot-password" href="https://oxfordinformatics.com/">Forgot password ?</a> -->
+
           Already have an account? <nuxt-link to="/Login">
             Sign in
           </nuxt-link>
@@ -75,14 +79,11 @@ export default {
   mixins: [common],
   data () {
     return {
-      // validCredentials: {
-      //   username: 'lightscope',
-      //   password: 'lightscope'
-      // },
       form: {
         username: '',
         email: '',
-        password: ''
+        password: '',
+        role: []
       },
       fieldTypes: {
         password: 'text'
@@ -100,12 +101,25 @@ export default {
           { max: 20, message: 'Must be maximum 50 characters!', trigger: 'blur' }
         ],
         password: [
-          { required: true, message: 'assword is required!', trigger: 'blur' },
+          { required: true, message: 'Password is required!', trigger: 'blur' },
           { min: 6, message: 'Must be at least 6 characters!', trigger: 'blur' },
           { max: 40, message: 'Must be maximum 40 characters!', trigger: 'blur' }
         ]
-      }
+      },
+      roles: ['user', 'admin', 'mod'],
+      checkedRoles: []
     }
+  },
+  computed: {
+    loggedIn () {
+      return this.$store.state.auth.status.loggedIn
+    }
+  },
+  mounted () {
+    if (this.loggedIn) {
+      this.$router.push('/profile')
+    }
+    // this.getRoles()
   },
   created () {
   },
@@ -117,30 +131,24 @@ export default {
       if (!valid) {
         return
       }
-      // this.$refs.form.validate((valid) => {
-      //   if (!valid) {
-      //     this.$message.error('Username or password is invalid')
-      //   }
-      // })
       this.loading = true
       await axios
         .post('http://localhost:8080/api/auth/signup', this.form)
         .then((response) => {
-          console.log('response.data.accessToken > ', response.data.accessToken)
-          if (response.data.accessToken) {
-            localStorage.setItem('user', JSON.stringify(response.data))
-            this.$store.dispatch('auth/register', this.form)
-            this.$message.success(response.data.message)
-            this.loading = false
-            this.$router.push('/login')
-          }
+          console.log('/signup response > ', response)
+          this.$store.commit('auth/registerSuccess')
+          this.$message.success(response.data.message)
+          this.$router.push('/login')
         })
         .catch((error) => {
           this.message = (error.response && error.response.data && error.response.data.message) || error.message || error.toString()
-          this.$store.dispatch('auth/register')
+          this.$store.commit('auth/registerFailure')
           this.$message.error(this.message)
           this.loading = false
         })
+    },
+    handleCheckedRolesChange (val) {
+      this.form.role = val
     },
     handleType (event) {
       const { srcElement, type } = event

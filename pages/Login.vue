@@ -6,18 +6,22 @@
         <el-form
           ref="form"
           class="login-form"
-          :model="model"
+          :model="form"
           :rules="rules"
           @submit.native.prevent="onSubmit"
         >
           <el-form-item prop="username">
             <label class="label">Username</label>
-            <el-input v-model="model.username" placeholder="Username" prefix-icon="fas fa-user" />
+            <el-input
+              v-model="form.username"
+              placeholder="Username"
+              prefix-icon="fas fa-user"
+            />
           </el-form-item>
           <el-form-item prop="password">
             <label class="label">Password</label>
             <el-input
-              v-model="model.password"
+              v-model="form.password"
               placeholder="Password"
               type="password"
               prefix-icon="fas fa-lock"
@@ -44,16 +48,15 @@
 </template>
 
 <script>
-// import axios from 'axios'
+import axios from 'axios'
+import { common } from '~/mixin/common.js'
+
 export default {
   name: 'Login',
+  mixins: [common],
   data () {
     return {
-      validCredentials: {
-        username: 'lightscope',
-        password: 'lightscope'
-      },
-      model: {
+      form: {
         username: '',
         password: ''
       },
@@ -82,7 +85,15 @@ export default {
       }
     }
   },
+  computed: {
+    loggedIn () {
+      return this.$store.state.auth.status.loggedIn
+    }
+  },
   created () {
+    if (this.loggedIn) {
+      this.$router.push('/profile')
+    }
   },
   methods: {
     async onSubmit () {
@@ -92,17 +103,22 @@ export default {
         return
       }
       this.loading = true
-      await this.$store.dispatch('auth/login', this.model).then(
-        () => {
+      await axios
+        .post('http://localhost:8080/api/auth/signin', this.form)
+        .then((response) => {
+          if (response.data.accessToken) {
+            localStorage.setItem('user', JSON.stringify(response.data))
+          }
+          this.$store.commit('auth/loginSuccess', this.form)
           this.$message.success('Login successfull')
-          this.$router.push('/')
-        },
-        (error) => {
-          console.error(error)
-          this.loading = false
-          this.$message.error('Username or password is invalid')
-        }
-      )
+          this.$router.push('/profile')
+        })
+        .catch((error) => {
+          this.message = (error.response && error.response.data && error.response.data.message) || error.message || error.toString()
+          this.$store.commit('auth/loginFailure')
+          this.$message.error(this.message)
+        })
+      this.loading = false
     },
     goPage (url) {
       if (url) {
