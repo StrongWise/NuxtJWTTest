@@ -71,7 +71,7 @@ export default {
     }
   },
   mounted () {
-    if (!this.currentUser) {
+    if (!this.currentUser) { // 유저 정보가 없으면 로그인화면으로 이동
       this.$router.push('/login')
     }
   },
@@ -84,14 +84,7 @@ export default {
       this.contents = []
     },
     async getContent (role) {
-      let url = 'all'
-      if (role === 'ROLE_USER') {
-        url = 'user'
-      } else if (role === 'ROLE_MODERATOR') {
-        url = 'mod'
-      } else if (role === 'ROLE_ADMIN') {
-        url = 'admin'
-      }
+      const url = this.setRole(role)
       await axios
         .get('http://localhost:8080/api/board/' + url, { headers: this.authHeader() })
         .then((response) => {
@@ -105,6 +98,17 @@ export default {
           error.message ||
           error.toString()
         })
+    },
+    setRole (role) {
+      if (role === 'ROLE_USER') {
+        return 'user'
+      } else if (role === 'ROLE_MODERATOR') {
+        return 'mod'
+      } else if (role === 'ROLE_ADMIN') {
+        return 'admin'
+      } else {
+        return 'all'
+      }
     }
   }
 }

@@ -119,11 +119,6 @@ export default {
           this.$message.error(this.message)
         })
       this.loading = false
-    },
-    goPage (url) {
-      if (url) {
-        this.$router.push(url)
-      }
     }
   }
 }

@@ -1,6 +1,8 @@
+// default state
 export const state = () => ({ status: { loggedIn: false }, user: null })
 
 export const actions = {
+  // localStorage 에 저장된 유저 인증 정보 로드
   loadAuthFromLocalStorage ({ commit }) {
     const user = JSON.parse(localStorage.getItem('user'))
     const initialState = user

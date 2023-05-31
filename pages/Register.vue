@@ -116,16 +116,13 @@ export default {
     }
   },
   mounted () {
-    if (this.loggedIn) {
+    if (this.loggedIn) { // 로그인 되어있으면 프로필로 이동
       this.$router.push('/profile')
     }
-    // this.getRoles()
-  },
-  created () {
   },
   methods: {
     async onSubmit () {
-      console.log('Register onSubmit', this.authHeader())
+      console.log('Register onSubmit')
 
       const valid = await this.$refs.form.validate()
       if (!valid) {
@@ -158,11 +155,6 @@ export default {
         this.fieldTypes[name] = 'text'
       } else {
         this.fieldTypes[name] = 'password'
-      }
-    },
-    goPage (url) {
-      if (url) {
-        this.$router.push(url)
       }
     }
   }

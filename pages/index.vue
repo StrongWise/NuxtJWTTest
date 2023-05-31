@@ -55,29 +55,33 @@ export default {
     }
   },
   async created () {
-    if (process.client) {
+    if (process.client) { // 브라우저(client)일 때 localStorage에 있는 유저 정보 로드
       await this.$store.dispatch('auth/loadAuthFromLocalStorage')
     }
-    if (this.loggedIn) {
+    if (this.loggedIn) { // 로그인 되어있으면 프로필로 이동
       this.$router.push('/profile')
     }
   },
-  async mounted () {
-    await axios
-      .get('http://localhost:8080/api/board/all')
-      .then((response) => {
-        this.content = response.data
-      })
-      .catch((error) => {
-        this.content =
+  mounted () {
+    this.getAllBoardContent()
+  },
+  methods: {
+    // 권한 필요없는 보드 컨텐츠 조회
+    async getAllBoardContent () {
+      await axios
+        .get('http://localhost:8080/api/board/all')
+        .then((response) => {
+          this.content = response.data
+        })
+        .catch((error) => {
+          this.content =
           (error.response &&
             error.response.data &&
             error.response.data.message) ||
           error.message ||
           error.toString()
-      })
-  },
-  methods: {
+        })
+    },
     loginBtn () {
       this.$router.push('/login')
     },
